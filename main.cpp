@@ -3,6 +3,7 @@
 #include <iostream>
 #include "./json.hpp"
 #include "./http_stuff.h"
+#include "./move.hpp"
 using namespace std;
 using namespace nlohmann;
 int main(void) {
@@ -31,7 +32,10 @@ int main(void) {
     //Example:
     //you_struct you = data["you"];
     string moves[4] = {"up", "down", "left", "right"};
-    int index = rand() % 4;
+    //int index = rand() % 4;
+
+		int index = cppssss::move(data);
+
     res.set_content("{\"move\": \"" + moves[index] + "\"}", "text/plain");
   });
   svr.listen("0.0.0.0", 8080);
