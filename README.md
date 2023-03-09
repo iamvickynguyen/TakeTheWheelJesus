@@ -1,3 +1,30 @@
+# Cppssss - UVic BattleSnake 2023
+
+## Idea:
+
+- Brute force is the best! Check as many possibilities as possible (like a decision tree, deeper is better but need to be fast. The game has a response time limit)
+- Minimax with MaxN ([Minimax in Battlesnake](https://coreyja.com/BattlesnakeMinimax/Minimax%20in%20Battlesnake/))
+- What is the heuristic for a snake?
+- If no better option, chase our tail or chase other snake tail. It's the safest path
+- If health < 50%, then find food. Otherwise, don't consider food. We need fast computation!
+- Which food is the best? The shortest path is not necessarily the best (there might be some snakes). I'm thinking of 2 ways:
+    1. Use Minimax. At the leave node, we evaluate the position. If there are some food nearby, we give higher score. This makes sense, cuz Minimax is the main theme.
+    2. No Minimax. Use some heuristic. Give each square on the board a weight. How?? (TODO) then use A* to find paths to each of the food, and choose the one with the lowest cost.
+- Do we want to kill other snake? Probably stay safe for now
+
+
+## Resources:
+
+1. [graemehill.ca/battle-snake/](http://graemehill.ca/battle-snake/)
+2. [Minimax in Battlsnake](https://coreyja.com/BattlesnakeMinimax/Minimax%20in%20Battlesnake/)
+3. [snek-two](https://github.com/aleksiy325/snek-two)
+
+## Testing:
+
+:star: [jfgodoy/battlesnake-tester](https://github.com/jfgodoy/battlesnake-tester)
+
+---
+
 # A simple [Battlesnake](http://play.battlesnake.com) written in C++ with Replit.
 
 This is a basic implementation of the [Battlesnake API](https://docs.battlesnake.com/snake-api). It's a great starting point for anyone wanting to program their first Battlesnake using C++. It comes ready to use with [Repl.it](https://repl.it) and provides instructions below for getting started.
