@@ -2,8 +2,6 @@
 #define INCLUDE_OBJECTS_HPP
 
 #include "./json.hpp"
-#include <string>
-#include <vector>
 
 struct Point {
   int x, y, weight;
