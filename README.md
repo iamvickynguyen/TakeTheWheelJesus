@@ -18,6 +18,7 @@
 1. [graemehill.ca/battle-snake/](http://graemehill.ca/battle-snake/)
 2. [Minimax in Battlsnake](https://coreyja.com/BattlesnakeMinimax/Minimax%20in%20Battlesnake/)
 3. [snek-two](https://github.com/aleksiy325/snek-two)
+4. [YouTube - minimax and alpha-beta pruning](https://youtu.be/l-hh51ncgDI)
 
 ## Testing:
 

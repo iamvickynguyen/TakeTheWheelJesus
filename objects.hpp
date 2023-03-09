@@ -13,7 +13,7 @@ struct Point {
 struct Snake {
   std::string id;
   int health;
-  std::vector<Point *> body;
+  std::deque<Point *> body; // head move, tail cuts off
   Point *head;
   Point *tail;
 
@@ -36,20 +36,25 @@ struct Snake {
       result = result * 10 + (c - '0');
     return result;
   }
+
+  bool is_alive(const int h, const int w) {
+    return (head->x >= 0 && head->x < w && head->y >= 0 && head->y < h);
+  }
 };
 
-class Board {
+class GameState {
 public:
   int height, width;
-  std::vector<Snake *> other_snakes;
-  Snake *mysnake;
+  std::vector<Snake *> snakes; // 0 index is my snake
   std::vector<Point *> foods;
   std::vector<Point *> hazards;
 
-  Board(const nlohmann::json board) {
+  GameState(const nlohmann::json board) {
     height = board["height"];
     width = board["width"];
-    mysnake = new Snake(board["you"]);
+    Snake *mysnake = new Snake(board["you"]);
+
+    snakes.push_back(mysnake);
 
     for (auto snake_data : board["snakes"]) {
       Snake *snake = new Snake(snake_data);
