@@ -59,7 +59,7 @@ public:
     for (auto snake_data : board["snakes"]) {
       Snake *snake = new Snake(snake_data);
       if (snake->id != mysnake->id) {
-        other_snakes.push_back(snake);
+        snakes.push_back(snake);
       }
     }
 
