@@ -8,6 +8,34 @@ constexpr double MAX = std::numeric_limits<double>::max();
 
 namespace cppssss {
 
+/* Things to consider to calculate the score:
+ * 	1. Length: Are we at least the second longest?
+ * 	2. Food: How many foods we can reach before the other snakes?
+ * 	3. Snakes: How many snakes are still alive?
+ * 	4. Space: How much space can we move? (i.e., How many squares can we
+ * 																					reach
+ * before other snakes?) Some properties are more important than others. Let's
+ * give them some weights Sum(weights) = 1 Need some ways to normalize the
+ * values above So our formula can be like this: score = 0.2 * length + 0.3 *
+ * food + 0.1 * snakes + 0.4 * space `Snakes` is 0.1 because hardly any snakes
+ * will die with small number of steps
+ */
+
+/* =================================================
+ * ================== HEURISTICS ===================
+ * ================================================= */
+
+// Return percentage
+
+double length_score(const std::deque<Snake *> &snakes) {
+  const int mysize = snakes[0]->body.size();
+  int count = 0;
+  for (int i = 1; i < snakes.size(); ++i) {
+    count += (mysize >= snakes[i]->body.size());
+  }
+  return (count + 0.0) / (snakes.size() - 1);
+}
+
 double calculate_score(GameState &state, const int snake_index) {
   Snake *snake = state.snakes[snake_index];
 
@@ -20,6 +48,14 @@ double calculate_score(GameState &state, const int snake_index) {
   double f = (double)rand() / RAND_MAX;
   return f * 50.0;
 }
+
+/* =================================================
+ * ================== MINIMAX ======================
+ * ================================================= */
+
+/* The code below is horrendous
+ * TODO: rewrite
+ */
 
 // We always maximize the score when it's our turn (i.e, snake_index=0)
 std::pair<double, char> minimax(GameState &state, int snake_index,
