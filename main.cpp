@@ -6,8 +6,21 @@
 #include <iostream>
 using namespace std;
 using namespace nlohmann;
+
+void add_cors_headers(httplib::Response &res) {
+  res.set_header("Allow", "GET, POST");
+  res.set_header("Access-Control-Allow-Origin", "*");
+  res.set_header("Access-Control-Allow-Methods", "GET, POST");
+  res.set_header("Access-Control-ALlow-Headers", "Content-Type");
+}
+
 int main(void) {
   httplib::Server svr;
+  svr.Options(".*", [](const auto &, auto &res) {
+    res.set_content("ok", "text/plain");
+
+    add_cors_headers(res);
+  });
   svr.Get("/", [](const auto &, auto &res) {
     string head = "default";  // TODO: Change head
     string tail = "default";  // TODO: Change tail
@@ -17,12 +30,18 @@ int main(void) {
                         "\", \"tail\":\"" + tail + "\", \"color\":\"" + color +
                         "\", " + "\"author\":\"" + author + "\"}",
                     "application/json");
+
+    add_cors_headers(res);
   });
   svr.Post("/end", [](const auto &, auto &res) {
     res.set_content("ok", "text/plain");
+
+    add_cors_headers(res);
   });
   svr.Post("/start", [](const auto &, auto &res) {
     res.set_content("ok", "text/plain");
+
+    add_cors_headers(res);
   });
   svr.Post("/move", [](auto &req, auto &res) {
     const json data = json::parse(req.body);
@@ -39,6 +58,8 @@ int main(void) {
     int index = cppssss::move(data);
 
     res.set_content("{\"move\": \"" + moves[index] + "\"}", "text/plain");
+
+    add_cors_headers(res);
   });
   svr.listen("0.0.0.0", 8080);
   cout << "Server started";
