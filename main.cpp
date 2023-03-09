@@ -39,6 +39,23 @@ int main(void) {
     add_cors_headers(res);
   });
   svr.Post("/start", [](const auto &, auto &res) {
+    // We should utilize the startup call to allocate memory and
+    // perform pre-computations: Every memory allocation in
+    // `move` is costly! Also, I don't think we have a time limit
+    // for this call either hehehe
+    //
+    // For example, instead of generating a min-max tree every move,
+    // we generate a tree at the start, filling in the data every move.
+    //
+    // If we have to allocate memory in `move`, we should use our
+    // own memory allocator, which is filled up at the start. That way,
+    // memory is already allocated and we don't have to use the costly
+    // `malloc` call (requires switching to Kernal mode which takes a lot
+    // of cycles compared to staying in user mode). This is what a lot of
+    // game engines do actually; learning gamedev has its perks :D
+    //
+    // Overall, we will be limited by the CPU: memory-intensive
+    // algorithms are more viable now.
     res.set_content("ok", "text/plain");
 
     add_cors_headers(res);
