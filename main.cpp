@@ -69,10 +69,10 @@ int main(void) {
     // Almost alike python dictionary parsing, but with a semicolon at the end
     // of each line. You might need to make some structs to store some data in a
     // variable Example: you_struct you = data["you"];
-    //string moves[4] = {"up", "down", "left", "right"};
+    // string moves[4] = {"up", "down", "left", "right"};
     // int index = rand() % 4;
 
-		std::string move = cppssss::move(data);
+    std::string move = cppssss::move(data);
 
     res.set_content("{\"move\": \"" + move + "\"}", "text/plain");
 
