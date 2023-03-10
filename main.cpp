@@ -22,10 +22,10 @@ int main(void) {
     add_cors_headers(res);
   });
   svr.Get("/", [](const auto &, auto &res) {
-    string head = "default";  // TODO: Change head
-    string tail = "default";  // TODO: Change tail
-    string author = "";       // TODO: Change your battlesnake username
-    string color = "#888888"; // TODO: Change a hex color
+    string head = "all-seeing";  // TODO: Change head
+    string tail = "curled";  // TODO: Change tail
+    string author = "killer-team";       // TODO: Change your battlesnake username
+    string color = "#FF0000"; // TODO: Change a hex color
     res.set_content("{\"apiversion\":\"1\", \"head\":\"" + head +
                         "\", \"tail\":\"" + tail + "\", \"color\":\"" + color +
                         "\", " + "\"author\":\"" + author + "\"}",

@@ -12,18 +12,16 @@ namespace cppssss {
  * 	1. Length: Are we at least the second longest?
  * 	2. Food: How many foods we can reach before the other snakes?
  * 	3. Snakes: How many snakes are still alive?
- * 	4. Space: How much space can we move? (i.e., How many squares can we
- * 																					reach
+ * 	4. Space: How much space can we move? (i.e., How many squares can we reach
  * before other snakes?) Some properties are more important than others. Let's
- * give them some weights Sum(weights) = 1 Need some ways to normalize the
- * values above So our formula can be like this:
+ * give them some weights. So our formula can be like this:
  * 		score = 20 * length
  * 				+ 30 * food * (health > 50) + 50 * food * (health <= 50)
  * 				- 10 * snakes
  * 				+ 40 * space
  * 				+ 50 * (10 - distance to tail) * (health > 50) + 30 * (10 - distance to tail) * (health <= 50)
- * `Snakes` is 0.1 because hardly any snakes
- * will die with small number of steps
+ * `Snakes` is 0.1 because hardly any
+ * snakes will die with small number of steps
  */
 
 /* =================================================
@@ -44,8 +42,8 @@ double length_score(const std::deque<Snake *> &snakes) {
 double calculate_score(GameState &state, const int snake_index) {
   Snake *snake = state.snakes[snake_index];
 
-  if (!(snake->is_alive(state.height, state.width)))
-    return MIN;
+  //  if (!(snake->is_alive(state.height, state.width)))
+  //    return MIN;
 
   // TODO: some better heuristics
   // Calculate best positions to food for now. Maybe reach to most food before
@@ -160,10 +158,10 @@ std::pair<double, char> minimax(GameState &state, int snake_index,
 std::string move(const nlohmann::json data) {
   GameState state(data);
 
-	// last survivor
-	// TODO: bug
-	if (state.snakes.size() == 0)
-		return "up";
+  // last survivor
+  // TODO: bug
+  if (state.snakes.size() == 0)
+    return "up";
 
   double curmax = MIN;
   char curmove;
@@ -175,7 +173,7 @@ std::string move(const nlohmann::json data) {
   for (auto &[y_offset, x_offset, dir] : moves) {
     int y = state.snakes[0]->head->y + y_offset;
     int x = state.snakes[0]->head->x + x_offset;
-    if (y >= 0 && y < state.height && x >= 0 && x < state.width) {
+    if (state.in_bound(y, x) && state.is_safe(y, x)) {
       snake->head->y = y;
       snake->head->x = x;
 
