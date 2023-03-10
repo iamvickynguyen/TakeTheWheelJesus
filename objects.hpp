@@ -42,10 +42,13 @@ public:
   std::vector<Point *> foods;
   std::vector<Point *> hazards;
 
-  GameState(const nlohmann::json board) {
+  GameState(const nlohmann::json all_data) {
+    nlohmann::json board = all_data["board"];
+    nlohmann::json game = all_data["game"];
+
     height = board["height"];
     width = board["width"];
-    Snake *mysnake = new Snake(board["you"]);
+    Snake *mysnake = new Snake(all_data["you"]);
 
     snakes.push_back(mysnake);
 
