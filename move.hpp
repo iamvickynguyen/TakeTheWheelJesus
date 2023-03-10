@@ -16,8 +16,13 @@ namespace cppssss {
  * 																					reach
  * before other snakes?) Some properties are more important than others. Let's
  * give them some weights Sum(weights) = 1 Need some ways to normalize the
- * values above So our formula can be like this: score = 0.2 * length + 0.3 *
- * food + 0.1 * snakes + 0.4 * space `Snakes` is 0.1 because hardly any snakes
+ * values above So our formula can be like this:
+ * 		score = 20 * length
+ * 				+ 30 * food * (health > 50) + 50 * food * (health <= 50)
+ * 				- 10 * snakes
+ * 				+ 40 * space
+ * 				+ 50 * (10 - distance to tail) * (health > 50) + 30 * (10 - distance to tail) * (health <= 50)
+ * `Snakes` is 0.1 because hardly any snakes
  * will die with small number of steps
  */
 
@@ -154,6 +159,11 @@ std::pair<double, char> minimax(GameState &state, int snake_index,
 
 std::string move(const nlohmann::json data) {
   GameState state(data);
+
+	// last survivor
+	// TODO: bug
+	if (state.snakes.size() == 0)
+		return "up";
 
   double curmax = MIN;
   char curmove;
