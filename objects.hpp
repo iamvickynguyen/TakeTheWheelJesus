@@ -20,7 +20,7 @@ struct Snake {
   Snake() {}
   Snake(const nlohmann::json snake_data) {
     id = snake_data["id"];
-    health = _strtoi(snake_data["health"]);
+    health = snake_data["health"];
 
     for (auto &point : snake_data["body"]) {
       body.push_back(new Point(point["x"], point["y"], 0));
@@ -28,13 +28,6 @@ struct Snake {
 
     head = new Point(snake_data["head"]["x"], snake_data["head"]["y"], 0);
     tail = body[body.size() - 1];
-  }
-
-  int _strtoi(const std::string n) {
-    int result = 0;
-    for (auto &c : n)
-      result = result * 10 + (c - '0');
-    return result;
   }
 
   bool is_alive(const int h, const int w) {
