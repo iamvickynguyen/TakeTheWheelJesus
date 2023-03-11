@@ -79,13 +79,13 @@ std::pair<double, char> minimax(GameState *state, int snake_index,
     std::tuple<int, int, char> moves[4] = {
         {-1, 0, 'd'}, {1, 0, 'u'}, {0, -1, 'l'}, {0, 1, 'r'}};
     for (auto &[y_offset, x_offset, dir] : moves) {
-      int y = snake->head->y + y_offset;
-      int x = snake->head->x + x_offset;
+      int y = snake->head.y + y_offset;
+      int x = snake->head.x + x_offset;
       if (y >= 0 && y < state->height && x >= 0 && x < state->width) {
-        snake->head->y = y;
-        snake->head->x = x;
+        snake->head.y = y;
+        snake->head.x = x;
 
-        Point *p = snake->body.back();
+        Point p = snake->body.back();
         snake->body.pop_back();
         snake->body.push_front(snake->head);
 
@@ -101,8 +101,8 @@ std::pair<double, char> minimax(GameState *state, int snake_index,
         // restore
         snake->body.pop_front();
         snake->body.push_back(p);
-        snake->head->y -= y_offset;
-        snake->head->x += x_offset;
+        snake->head.y -= y_offset;
+        snake->head.x += x_offset;
 
         alpha = std::max(alpha, curmax);
         if (beta <= alpha)
@@ -122,13 +122,13 @@ std::pair<double, char> minimax(GameState *state, int snake_index,
     std::tuple<int, int, char> moves[4] = {
         {-1, 0, 'd'}, {1, 0, 'u'}, {0, -1, 'l'}, {0, 1, 'r'}};
     for (auto &[y_offset, x_offset, dir] : moves) {
-      int y = snake->head->y + y_offset;
-      int x = snake->head->x + x_offset;
+      int y = snake->head.y + y_offset;
+      int x = snake->head.x + x_offset;
       if (y >= 0 && y < state->height && x >= 0 && x < state->width) {
-        snake->head->y = y;
-        snake->head->x = x;
+        snake->head.y = y;
+        snake->head.x = x;
 
-        Point *p = snake->body.back();
+        Point p = snake->body.back();
         snake->body.pop_back();
         snake->body.push_front(snake->head);
 
@@ -144,8 +144,8 @@ std::pair<double, char> minimax(GameState *state, int snake_index,
         // restore
         snake->body.pop_front();
         snake->body.push_back(p);
-        snake->head->y -= y_offset;
-        snake->head->x += x_offset;
+        snake->head.y -= y_offset;
+        snake->head.x += x_offset;
 
         beta = std::min(beta, curmin);
         if (beta <= alpha)
@@ -173,13 +173,13 @@ std::string move(GameState *state) {
   std::tuple<int, int, char> moves[4] = {
       {-1, 0, 'd'}, {1, 0, 'u'}, {0, -1, 'l'}, {0, 1, 'r'}};
   for (auto &[y_offset, x_offset, dir] : moves) {
-    int y = state->snakes[0]->head->y + y_offset;
-    int x = state->snakes[0]->head->x + x_offset;
+    int y = state->snakes[0]->head.y + y_offset;
+    int x = state->snakes[0]->head.x + x_offset;
     if (state->in_bound(y, x) && state->is_safe(y, x)) {
-      snake->head->y = y;
-      snake->head->x = x;
+      snake->head.y = y;
+      snake->head.x = x;
 
-      Point *p = snake->body.back();
+      Point p = snake->body.back();
       snake->body.pop_back();
       snake->body.push_front(snake->head);
 
@@ -193,8 +193,8 @@ std::string move(GameState *state) {
       // restore
       snake->body.pop_front();
       snake->body.push_back(p);
-      snake->head->y -= y_offset;
-      snake->head->x += x_offset;
+      snake->head.y -= y_offset;
+      snake->head.x += x_offset;
 
       alpha = std::max(alpha, curmax);
       if (beta <= alpha)

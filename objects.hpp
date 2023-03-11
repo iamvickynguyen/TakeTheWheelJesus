@@ -25,9 +25,9 @@ struct Point {
 struct Snake {
   std::string id;
   int health;
-  std::deque<Point *> body; // head move, tail cuts off
-  Point *head;
-  Point *tail;
+  std::deque<Point> body; // head move, tail cuts off
+  Point head;
+  Point tail;
   bool is_alive;
 
   Snake() {}
@@ -36,7 +36,7 @@ struct Snake {
     health = snake_data["health"];
 
     for (auto &point : snake_data["body"]) {
-      body.push_back(new Point(point["x"], point["y"], 0));
+      body.push_back(Point(point["x"], point["y"], 0));
     }
 
     head = body[0];
@@ -48,8 +48,8 @@ class GameState {
 public:
   int height, width;
   std::vector<Snake *> snakes; // 0 index is my snake
-  std::vector<Point *> foods;
-  std::vector<Point *> hazards;
+  std::vector<Point> foods;
+  std::vector<Point> hazards;
   std::vector<std::vector<Objects>> grid;
 
   GameState(const nlohmann::json all_data) {
@@ -82,10 +82,10 @@ public:
 
     // update my snake
     for (auto &part : mysnake->body) {
-      grid[part->y][part->x] = MYBODY;
+      grid[part.y][part.x] = MYBODY;
     }
-    grid[mysnake->head->y][mysnake->head->x] = MYHEAD;
-    grid[mysnake->tail->y][mysnake->tail->x] = MYTAIL;
+    grid[mysnake->head.y][mysnake->head.x] = MYHEAD;
+    grid[mysnake->tail.y][mysnake->tail.x] = MYTAIL;
 
     for (auto snake_data : board["snakes"]) {
       Snake *snake = new Snake(snake_data);
@@ -94,22 +94,22 @@ public:
 
         // update other snake
         for (auto &part : snake->body) {
-          grid[part->y][part->x] = OTHERBODY;
+          grid[part.y][part.x] = OTHERBODY;
         }
-        grid[snake->head->y][snake->head->x] = OTHERHEAD;
-        grid[snake->tail->y][snake->tail->x] = OTHERTAIL;
+        grid[snake->head.y][snake->head.x] = OTHERHEAD;
+        grid[snake->tail.y][snake->tail.x] = OTHERTAIL;
       }
     }
 
     foods.clear(); // Hopefully doesn't reallocate
     for (auto &point : board["food"]) {
-      foods.push_back(new Point(point["x"], point["y"], 0));
+      foods.push_back(Point(point["x"], point["y"], 0));
       grid[point["y"]][point["x"]] = FOOD; // update grid
     }
 
     hazards.clear(); // Hopefully doesn't reallocate
     for (auto &point : board["hazards"]) {
-      hazards.push_back(new Point(point["x"], point["y"], 0));
+      hazards.push_back(Point(point["x"], point["y"], 0));
       grid[point["y"]][point["x"]] = HAZARD; // upate grid
     }
   }
