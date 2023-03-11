@@ -3,8 +3,8 @@
 
 #include "./objects.hpp"
 
-constexpr double MIN = std::numeric_limits<double>::min();
-constexpr double MAX = std::numeric_limits<double>::max();
+constexpr int MIN = std::numeric_limits<int>::min();
+constexpr int MAX = std::numeric_limits<int>::max();
 
 namespace cppssss {
 
@@ -14,17 +14,13 @@ namespace cppssss {
  * 	3. Snakes: How many snakes are still alive?
  * 	4. Space: How much space can we move? (i.e., How many squares can we
  * reach before other snakes?) Some properties are more important than others.
- * Let's give them some weights. So our formula can be like this: score = 20 *
- * length
- * 				+ 30 * food * (health > 50) + 50 * food *
- * (health
- * <= 50)
+ * Let's give them some weights. So our formula can be like this:
+ * score = 20 * length
+ * 				+ 30 * food * (health > 50) + 50 * food * (health <= 50)
  * 				- 10 * snakes
  * 				+ 40 * space
- * 				+ 50 * (10 - distance to tail) * (health > 50) +
- * 30
- * * (10
- * - distance to tail) * (health <= 50) `Snakes` is 0.1 because hardly any
+ * 				+ 50 * (10 - distance to tail) * (health > 50) + 30 * (10 - distance to tail) * (health <= 50)
+ * `Snakes` is 0.1 because hardly any
  * snakes will die with small number of steps
  */
 
@@ -32,29 +28,107 @@ namespace cppssss {
  * ================== HEURISTICS ===================
  * ================================================= */
 
-// Return percentage
-
-double length_score(const std::deque<Snake *> &snakes) {
+int length_score(GameState* state) {
+	std::vector<Snake*> snakes = std::move(state->snakes);
   const int mysize = snakes[0]->body.size();
   int count = 0;
   for (int i = 1; i < snakes.size(); ++i) {
     count += (mysize >= snakes[i]->body.size());
   }
-  return (count + 0.0) / (snakes.size() - 1);
+  return (count * 100) / (snakes.size() - 1);
 }
 
-double calculate_score(GameState *state, const int snake_index) {
+int food_score(GameState* state) {
+	int count = 0;
+	Snake* mysnake = state->snakes[0];
+	int myhead_y = mysnake->head.y;
+	int myhead_x = mysnake->head.x;
+	for (auto &food: state->foods) {
+		int mydist = abs(food.y - myhead_y) + abs(food.x - myhead_x);
+		for (int i = 1; i < state->snakes.size(); ++i) {
+			Snake* snake = state->snakes[i];
+			int y = snake->head.y, x = snake->head.x;
+			int dist = abs(food.y - y) + abs(food.x - x);
+			count += (mydist > dist);
+		}
+	}
+	return (count * 100) / (state->foods.size());
+}
+
+int snake_score(GameState* state) {
+	std::vector<std::vector<Objects>> grid = std::move(state->grid);
+	int survivors = 0;
+	for (int i = 0; i < grid.size(); ++i) {
+		for (int j = 0; j < grid[0].size(); ++j) {
+			if (grid[i][j] == OTHERHEAD) ++survivors;
+		}
+	}
+	return (100 * survivors) / state->snakes.size();
+}
+
+int space_score(GameState* state) {
+	int count = 0;
+	std::vector<std::vector<Objects>> grid = std::move(state->grid);
+	Snake* mysnake = state->snakes[0];
+	const int myhead_y = mysnake->head.y;
+	const int myhead_x = mysnake->head.x;
+	for (int i = 0; i < state->height; ++i) {
+		for (int j = 0; j < state->width; ++j) {
+			if (grid[i][j] == EMPTY) {
+				int mydist = abs(i - myhead_y) + abs(j - myhead_x);
+				int mindist = MAX;
+				for (int k = 1; k < state->snakes.size(); ++k) {
+					Snake* snake = state->snakes[k];
+					int y = snake->head.y, x = snake->head.x;
+					int dist = abs(i - y) + abs(j - x);
+					mindist = std::min(mindist, dist);
+				}
+
+				count += (mydist > mindist);
+			}
+		}
+	}
+
+	return (100 * count) / (state->height * state->width);
+}
+
+int dist_to_tail_score(GameState* state) {
+	Snake* snake = state->snakes[0];
+	int dist = abs(snake->tail.y - snake->head.y) + abs(snake->tail.x - snake->head.x);
+	return (100 * dist) / (state->height + state->width);
+}
+	
+
+int calculate_score(GameState* state, const int snake_index) {
   Snake *snake = state->snakes[snake_index];
 
-  //  if (!(snake->is_alive(state.height, state.width)))
-  //    return MIN;
+	// if it's our turn
+	if (snake_index == 0 && state->grid[snake->head.y][snake->head.x] != MYHEAD)
+			return MIN;
 
-  // TODO: some better heuristics
-  // Calculate best positions to food for now. Maybe reach to most food before
-  // others?
-	double f = rand() % 100 + 1.0;
-	std::cout << "f=" << f << '\n';
-  return f;
+	// if we're the last one
+	bool other_survive = false;
+	if (snake_index == 0) {
+		for (auto &row: state->grid) {
+			for (auto &cell: row) {
+				other_survive |= (cell == OTHERHEAD);
+			}
+		}
+
+		if (!other_survive) return MAX;
+	}
+
+	int score_length = length_score(state);
+	int score_food = food_score(state);
+	int score_snake = snake_score(state);
+	int score_space = space_score(state);
+	int dist = dist_to_tail_score(state);
+
+	return 20 * score_length
+		+ 30 * score_food * (snake->health > 50) + 50 * score_food * (snake->health <= 50)
+		- 10 * score_snake
+		+ 40 * score_space
+		+ 50 * (10 - dist) * (snake->health > 50) + 30 * (10 - dist) * (snake->health <= 50);
 }
 
 /* =================================================
@@ -66,8 +140,8 @@ double calculate_score(GameState *state, const int snake_index) {
  */
 
 // We always maximize the score when it's our turn (i.e, snake_index=0)
-std::pair<double, char> minimax(GameState *state, int snake_index,
-                                char direction, double alpha, double beta,
+std::pair<int, char> minimax(GameState *state, int snake_index,
+                                char direction, int alpha, int beta,
                                 int depth, int max_depth) {
 	std::cout << "SNAKE_INDEX=" << snake_index << ", DIR=" << direction << ", alpha=" << alpha << ", beta=" << beta << ", depth=" << depth << ", max_depth=" << max_depth << '\n';
 
@@ -75,7 +149,7 @@ std::pair<double, char> minimax(GameState *state, int snake_index,
     return {calculate_score(state, snake_index), direction};
 
   if (snake_index == 0) {
-    double curmax = MIN;
+    int curmax = MIN;
     char curmove = direction;
 
     Snake *snake = state->snakes[snake_index];
@@ -119,7 +193,7 @@ std::pair<double, char> minimax(GameState *state, int snake_index,
 
   // TODO: rewrite this, too much duplicate code
   else {
-    double curmin = MAX;
+    int curmin = MAX;
     char curmove = direction;
 
     Snake *snake = state->snakes[snake_index];
@@ -172,9 +246,9 @@ std::string move(GameState *state) {
   if (state->snakes.size() == 0)
     return "up";
 
-  double curmax = MIN;
+  int curmax = MIN;
   char curmove;
-  double alpha = MIN, beta = MAX;
+  int alpha = MIN, beta = MAX;
 
   Snake *snake = state->snakes[0];
   std::tuple<int, int, char> moves[4] = {

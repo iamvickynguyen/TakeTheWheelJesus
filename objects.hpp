@@ -135,40 +135,43 @@ public:
     return (grid[y][x] == EMPTY || grid[y][x] == FOOD ||
             grid[y][x] == OTHERTAIL || grid[y][x] == MYTAIL);
   }
+
 	
 	// Update new position of the snake, also update the grid
 	// If the snake eats food then, tail stays
 	// also health = 100
-	Point snake_move(Snake* snake, const int newy, const int newx, const int mysnake) {
+	std::pair<Point, Objects> snake_move(Snake* snake, const int newy, const int newx, const int mysnake) {
 		snake->head.y = newy;
 		snake->head.x = newx;
 
 		Point oldtail = snake->body.back();
+		Objects obj = grid[newy][newx];
+
 		snake->body.push_front(snake->head);
 	
 		if (grid[newy][newx] != FOOD) { // update tail
 			snake->body.pop_back();
 			Point newtail = snake->body.back();
-			grid[tail.y][tail.x] = EMPTY;
-			grid[newtail.y][newtail.x] = (mysnake == 1) * MYTAIL + (mysnake != 1) * OTHERTAIL;
+			grid[oldtail.y][oldtail.x] = EMPTY;
+			grid[newtail.y][newtail.x] = mysnake ? MYTAIL : OTHERTAIL;
 		} // else FOOD -> do nothing
 
 		// Update head	
 		if (grid[newy][newx] == EMPTY) {
-			grid[newy][newx] = (mysnake == 1) * MYHEAD + (mysnake != 1) * OTHERHEAD;
+			grid[newy][newx] = mysnake ? MYHEAD : OTHERHEAD;
 		}
 
 		// Suppose it's my turn, if the grid[newy][newx] == OTHERTAIL
 		// What to update when the other snake hasn't moved yet? Also vice versa?
 		else {
-			grid[newy][newx] = (mysnake == 1) * MYHEAD + (mysnake != 1) * OTHERHEAD;
+			grid[newy][newx] = mysnake ? MYHEAD : OTHERHEAD;
 		}
 
-		return oldtail;
+		return {oldtail, obj};
 	}
 
 	// snake moves backwards
-	void restore_snake_move(Snake* snake, const int y_offset, const int x_offset, Point& oldtail) {
+	void restore_snake_move(Snake* snake, const int y_offset, const int x_offset, Point& oldtail, Objects obj) {
 		snake->body.pop_front();
 		snake->body.push_back(oldtail);
 		snake->head.y -= y_offset;
