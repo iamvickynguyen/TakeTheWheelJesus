@@ -52,8 +52,9 @@ double calculate_score(GameState *state, const int snake_index) {
   // TODO: some better heuristics
   // Calculate best positions to food for now. Maybe reach to most food before
   // others?
-  double f = (double)rand() / RAND_MAX;
-  return f * 50.0;
+	double f = rand() % 100 + 1.0;
+	std::cout << "f=" << f << '\n';
+  return f;
 }
 
 /* =================================================
@@ -68,6 +69,8 @@ double calculate_score(GameState *state, const int snake_index) {
 std::pair<double, char> minimax(GameState *state, int snake_index,
                                 char direction, double alpha, double beta,
                                 int depth, int max_depth) {
+	std::cout << "SNAKE_INDEX=" << snake_index << ", DIR=" << direction << ", alpha=" << alpha << ", beta=" << beta << ", depth=" << depth << ", max_depth=" << max_depth << '\n';
+
   if (depth == max_depth)
     return {calculate_score(state, snake_index), direction};
 
@@ -93,24 +96,25 @@ std::pair<double, char> minimax(GameState *state, int snake_index,
         auto [value, new_dir] =
             minimax(state, new_index, dir, alpha, beta, depth + 1, max_depth);
 
+				std::cout << "value=" << value << ", new_dir=" << new_dir << '\n';
         if (value > curmax) {
           curmax = value;
           curmove = new_dir;
+					std::cout << "UPDATE IN IF, curmax=" << curmax << "\n";
         }
 
         // restore
         snake->body.pop_front();
         snake->body.push_back(p);
         snake->head.y -= y_offset;
-        snake->head.x += x_offset;
+        snake->head.x -= x_offset;
 
         alpha = std::max(alpha, curmax);
-        if (beta <= alpha)
-          break;
+        if (beta <= alpha) break;
       }
-
-      return {curmax, curmove};
     }
+
+    return {curmax, curmove};
   }
 
   // TODO: rewrite this, too much duplicate code
@@ -135,27 +139,30 @@ std::pair<double, char> minimax(GameState *state, int snake_index,
         int new_index = (snake_index + 1) % (state->snakes.size());
         auto [value, new_dir] =
             minimax(state, new_index, dir, alpha, beta, depth + 1, max_depth);
+				
+				std::cout << "value=" << value << ", new_dir=" << new_dir << '\n';
 
         if (value < curmin) {
           curmin = value;
           curmove = new_dir;
+					std::cout << "UPDATE IN ELSE\n";
         }
 
         // restore
         snake->body.pop_front();
         snake->body.push_back(p);
         snake->head.y -= y_offset;
-        snake->head.x += x_offset;
+        snake->head.x -= x_offset;
 
         beta = std::min(beta, curmin);
         if (beta <= alpha)
           break;
       }
-
-      return {curmin, curmove};
     }
+    return {curmin, curmove};
   }
 
+	std::cout << "SOMEHOW WE HIT THIS\n";
   return {MIN, 'u'}; // dummy
 }
 
@@ -173,8 +180,14 @@ std::string move(GameState *state) {
   std::tuple<int, int, char> moves[4] = {
       {-1, 0, 'd'}, {1, 0, 'u'}, {0, -1, 'l'}, {0, 1, 'r'}};
   for (auto &[y_offset, x_offset, dir] : moves) {
-    int y = state->snakes[0]->head.y + y_offset;
-    int x = state->snakes[0]->head.x + x_offset;
+		std::cout << "LOOP: " << y_offset << ", " << x_offset << ", dir=" << dir << '\n';
+
+    int y = snake->head.y + y_offset;
+    int x = snake->head.x + x_offset;
+
+//		std::cout << "y=" << y << ", x=" << x << ", height=" << state->height << ", width=" << state->width << ", inbound="
+//			<< (state->in_bound(y, x)) << ", is_safe=" << (state->is_safe(y, x)) << '\n';
+
     if (state->in_bound(y, x) && state->is_safe(y, x)) {
       snake->head.y = y;
       snake->head.x = x;
@@ -183,18 +196,21 @@ std::string move(GameState *state) {
       snake->body.pop_back();
       snake->body.push_front(snake->head);
 
-      auto [value, new_dir] = minimax(state, 1, dir, alpha, beta, 1, 20);
+      auto [value, new_dir] = minimax(state, 1, dir, alpha, beta, 1, 3);
+			
+			std::cout << "VALUE: " << value << '\n';
 
       if (value > curmax) {
         curmax = value;
         curmove = new_dir;
+				std::cout << "UPDATE CUR MOVE " << curmove << '\n';
       }
 
       // restore
       snake->body.pop_front();
       snake->body.push_back(p);
       snake->head.y -= y_offset;
-      snake->head.x += x_offset;
+      snake->head.x -= x_offset;
 
       alpha = std::max(alpha, curmax);
       if (beta <= alpha)
@@ -202,7 +218,9 @@ std::string move(GameState *state) {
     }
   }
 
-  if (curmove == 'u')
+	std::cout << "MOVE " << curmove << '\n';
+  
+	if (curmove == 'u')
     return "up";
   if (curmove == 'd')
     return "down";
