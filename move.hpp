@@ -12,15 +12,19 @@ namespace cppssss {
  * 	1. Length: Are we at least the second longest?
  * 	2. Food: How many foods we can reach before the other snakes?
  * 	3. Snakes: How many snakes are still alive?
- * 	4. Space: How much space can we move? (i.e., How many squares can we reach
- * before other snakes?) Some properties are more important than others. Let's
- * give them some weights. So our formula can be like this:
- * 		score = 20 * length
- * 				+ 30 * food * (health > 50) + 50 * food * (health <= 50)
+ * 	4. Space: How much space can we move? (i.e., How many squares can we
+ * reach before other snakes?) Some properties are more important than others.
+ * Let's give them some weights. So our formula can be like this: score = 20 *
+ * length
+ * 				+ 30 * food * (health > 50) + 50 * food *
+ * (health
+ * <= 50)
  * 				- 10 * snakes
  * 				+ 40 * space
- * 				+ 50 * (10 - distance to tail) * (health > 50) + 30 * (10 - distance to tail) * (health <= 50)
- * `Snakes` is 0.1 because hardly any
+ * 				+ 50 * (10 - distance to tail) * (health > 50) +
+ * 30
+ * * (10
+ * - distance to tail) * (health <= 50) `Snakes` is 0.1 because hardly any
  * snakes will die with small number of steps
  */
 
@@ -39,8 +43,8 @@ double length_score(const std::deque<Snake *> &snakes) {
   return (count + 0.0) / (snakes.size() - 1);
 }
 
-double calculate_score(GameState &state, const int snake_index) {
-  Snake *snake = state.snakes[snake_index];
+double calculate_score(GameState *state, const int snake_index) {
+  Snake *snake = state->snakes[snake_index];
 
   //  if (!(snake->is_alive(state.height, state.width)))
   //    return MIN;
@@ -61,7 +65,7 @@ double calculate_score(GameState &state, const int snake_index) {
  */
 
 // We always maximize the score when it's our turn (i.e, snake_index=0)
-std::pair<double, char> minimax(GameState &state, int snake_index,
+std::pair<double, char> minimax(GameState *state, int snake_index,
                                 char direction, double alpha, double beta,
                                 int depth, int max_depth) {
   if (depth == max_depth)
@@ -71,13 +75,13 @@ std::pair<double, char> minimax(GameState &state, int snake_index,
     double curmax = MIN;
     char curmove = direction;
 
-    Snake *snake = state.snakes[snake_index];
+    Snake *snake = state->snakes[snake_index];
     std::tuple<int, int, char> moves[4] = {
         {-1, 0, 'd'}, {1, 0, 'u'}, {0, -1, 'l'}, {0, 1, 'r'}};
     for (auto &[y_offset, x_offset, dir] : moves) {
       int y = snake->head->y + y_offset;
       int x = snake->head->x + x_offset;
-      if (y >= 0 && y < state.height && x >= 0 && x < state.width) {
+      if (y >= 0 && y < state->height && x >= 0 && x < state->width) {
         snake->head->y = y;
         snake->head->x = x;
 
@@ -85,7 +89,7 @@ std::pair<double, char> minimax(GameState &state, int snake_index,
         snake->body.pop_back();
         snake->body.push_front(snake->head);
 
-        int new_index = (snake_index + 1) % (state.snakes.size());
+        int new_index = (snake_index + 1) % (state->snakes.size());
         auto [value, new_dir] =
             minimax(state, new_index, dir, alpha, beta, depth + 1, max_depth);
 
@@ -114,13 +118,13 @@ std::pair<double, char> minimax(GameState &state, int snake_index,
     double curmin = MAX;
     char curmove = direction;
 
-    Snake *snake = state.snakes[snake_index];
+    Snake *snake = state->snakes[snake_index];
     std::tuple<int, int, char> moves[4] = {
         {-1, 0, 'd'}, {1, 0, 'u'}, {0, -1, 'l'}, {0, 1, 'r'}};
     for (auto &[y_offset, x_offset, dir] : moves) {
       int y = snake->head->y + y_offset;
       int x = snake->head->x + x_offset;
-      if (y >= 0 && y < state.height && x >= 0 && x < state.width) {
+      if (y >= 0 && y < state->height && x >= 0 && x < state->width) {
         snake->head->y = y;
         snake->head->x = x;
 
@@ -128,7 +132,7 @@ std::pair<double, char> minimax(GameState &state, int snake_index,
         snake->body.pop_back();
         snake->body.push_front(snake->head);
 
-        int new_index = (snake_index + 1) % (state.snakes.size());
+        int new_index = (snake_index + 1) % (state->snakes.size());
         auto [value, new_dir] =
             minimax(state, new_index, dir, alpha, beta, depth + 1, max_depth);
 
@@ -155,25 +159,23 @@ std::pair<double, char> minimax(GameState &state, int snake_index,
   return {MIN, 'u'}; // dummy
 }
 
-std::string move(const nlohmann::json data) {
-  GameState state(data);
-
+std::string move(GameState *state) {
   // last survivor
   // TODO: bug
-  if (state.snakes.size() == 0)
+  if (state->snakes.size() == 0)
     return "up";
 
   double curmax = MIN;
   char curmove;
   double alpha = MIN, beta = MAX;
 
-  Snake *snake = state.snakes[0];
+  Snake *snake = state->snakes[0];
   std::tuple<int, int, char> moves[4] = {
       {-1, 0, 'd'}, {1, 0, 'u'}, {0, -1, 'l'}, {0, 1, 'r'}};
   for (auto &[y_offset, x_offset, dir] : moves) {
-    int y = state.snakes[0]->head->y + y_offset;
-    int x = state.snakes[0]->head->x + x_offset;
-    if (state.in_bound(y, x) && state.is_safe(y, x)) {
+    int y = state->snakes[0]->head->y + y_offset;
+    int x = state->snakes[0]->head->x + x_offset;
+    if (state->in_bound(y, x) && state->is_safe(y, x)) {
       snake->head->y = y;
       snake->head->x = x;
 

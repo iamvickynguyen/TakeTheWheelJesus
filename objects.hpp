@@ -59,8 +59,18 @@ public:
     height = board["height"];
     width = board["width"];
     grid.assign(height, std::vector<Objects>(width, EMPTY));
+
+    update(all_data);
+  }
+
+  void update(nlohmann::json all_data) {
+    nlohmann::json board = all_data["board"];
+    nlohmann::json game = all_data["game"];
+
+    reset_grid();
     Snake *mysnake = new Snake(all_data["you"]);
 
+    snakes.clear(); // Hopefully doesn't reallocate
     snakes.push_back(mysnake);
 
     // update my snake
@@ -84,14 +94,24 @@ public:
       }
     }
 
+    foods.clear(); // Hopefully doesn't reallocate
     for (auto &point : board["food"]) {
       foods.push_back(new Point(point["x"], point["y"], 0));
       grid[point["y"]][point["x"]] = FOOD; // update grid
     }
 
+    hazards.clear(); // Hopefully doesn't reallocate
     for (auto &point : board["hazards"]) {
       hazards.push_back(new Point(point["x"], point["y"], 0));
       grid[point["y"]][point["x"]] = HAZARD; // upate grid
+    }
+  }
+
+  void reset_grid() {
+    for (int i = 0; i < grid.size(); i++) {
+      for (int j = 0; j < grid[i].size(); j++) {
+        grid[i][j] = EMPTY;
+      }
     }
   }
 

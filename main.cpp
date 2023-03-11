@@ -16,16 +16,19 @@ void add_cors_headers(httplib::Response &res) {
 
 int main(void) {
   httplib::Server svr;
+
+  GameState *game = nullptr;
+
   svr.Options(".*", [](const auto &, auto &res) {
     res.set_content("ok", "text/plain");
 
     add_cors_headers(res);
   });
   svr.Get("/", [](const auto &, auto &res) {
-    string head = "all-seeing";  // TODO: Change head
-    string tail = "curled";  // TODO: Change tail
-    string author = "killer-team";       // TODO: Change your battlesnake username
-    string color = "#FF0000"; // TODO: Change a hex color
+    string head = "all-seeing";    // TODO: Change head
+    string tail = "curled";        // TODO: Change tail
+    string author = "killer-team"; // TODO: Change your battlesnake username
+    string color = "#FF0000";      // TODO: Change a hex color
     res.set_content("{\"apiversion\":\"1\", \"head\":\"" + head +
                         "\", \"tail\":\"" + tail + "\", \"color\":\"" + color +
                         "\", " + "\"author\":\"" + author + "\"}",
@@ -38,7 +41,7 @@ int main(void) {
 
     add_cors_headers(res);
   });
-  svr.Post("/start", [](const auto &, auto &res) {
+  svr.Post("/start", [game](const auto &req, auto &res) mutable {
     // We should utilize the startup call to allocate memory and
     // perform pre-computations: Every memory allocation in
     // `move` is costly! Also, I don't think we have a time limit
@@ -56,11 +59,14 @@ int main(void) {
     //
     // Overall, we will be limited by the CPU: memory-intensive
     // algorithms are more viable now.
+    const json data = json::parse(req.body);
+    game = new GameState(data);
+
     res.set_content("ok", "text/plain");
 
     add_cors_headers(res);
   });
-  svr.Post("/move", [](auto &req, auto &res) {
+  svr.Post("/move", [game](auto &req, auto &res) mutable {
     const json data = json::parse(req.body);
     cout << data;
     cout << "\n\n";
@@ -72,7 +78,15 @@ int main(void) {
     // string moves[4] = {"up", "down", "left", "right"};
     // int index = rand() % 4;
 
-    std::string move = cppssss::move(data);
+    // The BattleSnake Tester site doesn't follow the game rules:
+    // it doesn't first call `/start`!
+    if (game == nullptr) {
+      game = new GameState(data);
+    } else {
+      game->update(data);
+    }
+
+    std::string move = cppssss::move(game);
 
     res.set_content("{\"move\": \"" + move + "\"}", "text/plain");
 
