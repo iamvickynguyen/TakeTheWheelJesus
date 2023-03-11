@@ -64,6 +64,9 @@ public:
     foods.resize(height * width);
     hazards.resize(height * width);
 
+    size_t max_snakes = board["snakes"].size();
+    snakes.resize(max_snakes);
+
     update(all_data);
   }
 
