@@ -60,6 +60,10 @@ public:
     width = board["width"];
     grid.assign(height, std::vector<Objects>(width, EMPTY));
 
+    // Allocate max possible to avoid allocation
+    foods.resize(height * width);
+    hazards.resize(height * width);
+
     update(all_data);
   }
 
