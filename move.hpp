@@ -35,7 +35,7 @@ int length_score(GameState* state) {
   for (int i = 1; i < snakes.size(); ++i) {
     count += (mysize >= snakes[i]->body.size());
   }
-  return (count * 100) / (snakes.size() - 1);
+  return (count * 100) / std::max(1, (int)(snakes.size() - 1)); // avoid division by 0
 }
 
 int food_score(GameState* state) {
@@ -52,7 +52,8 @@ int food_score(GameState* state) {
 			count += (mydist > dist);
 		}
 	}
-	return (count * 100) / (state->foods.size());
+	
+	return (count * 100) / std::max(1, (int)state->foods.size()); // avoid division by 0
 }
 
 int snake_score(GameState* state) {
@@ -63,7 +64,7 @@ int snake_score(GameState* state) {
 			if (grid[i][j] == OTHERHEAD) ++survivors;
 		}
 	}
-	return (100 * survivors) / state->snakes.size();
+	return (100 * survivors) / std::max(1, (int)(state->snakes.size()));
 }
 
 int space_score(GameState* state) {
@@ -150,7 +151,7 @@ std::pair<int, char> minimax(GameState *state, int snake_index,
                                 char direction, int alpha, int beta,
                                 int depth, int max_depth) {
 	
-
+//	std::cout << "minimax:" << snake_index << ", alpha=" << alpha << ", beta=" << beta << ", depth=" << depth << ", maxdepth=" << max_depth << '\n'; 
 
   if (depth == max_depth)
     return {calculate_score(state, snake_index), direction};
@@ -244,8 +245,7 @@ std::pair<int, char> minimax(GameState *state, int snake_index,
 
 std::string move(GameState *state) {
   // last survivor
-  // TODO: bug
-  if (state->snakes.size() == 0)
+  if (state->snakes.size() == 1)
     return "up";
 
   int curmax = MIN;
@@ -268,7 +268,7 @@ std::string move(GameState *state) {
 				
 				bool did_tail_move = state->snake_move(0, y, x, true);
 				
-      	auto [value, new_dir] = minimax(state, 1, dir, alpha, beta, 1, 3);
+      	auto [value, new_dir] = minimax(state, 1, dir, alpha, beta, 1, 12);
 
 				if (value > curmax) {
 					curmax = value;
