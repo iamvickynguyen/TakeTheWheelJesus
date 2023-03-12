@@ -3,8 +3,10 @@
 
 #include "./objects.hpp"
 
-constexpr int MIN = std::numeric_limits<int>::min();
-constexpr int MAX = std::numeric_limits<int>::max();
+// constexpr int MIN = std::numeric_limits<int>::min();
+//constexpr int MAX = std::numeric_limits<int>::max();
+constexpr int MIN = -10000;
+constexpr int MAX = 1e8;
 
 namespace cppssss {
 
@@ -129,13 +131,16 @@ int calculate_score(GameState* state, const int snake_index) {
 	
 	int dist = dist_to_tail_score(state);
 
-	
+	std::cout << "score-length=" << score_length << ", score-food=" << score_food << ", score-snake=" << score_snake << ", score-space=" << score_space << ", dist-tail=" << dist << '\n';
 
-	return 20 * score_length
-		+ 30 * score_food * (snake->health > 50) + 50 * score_food * (snake->health <= 50)
-		- 10 * score_snake
-		+ 40 * score_space
-		+ 50 * (10 - dist) * (snake->health > 50) + 30 * (10 - dist) * (snake->health <= 50);
+	int result = 20 * score_length //20
+		+ 10 * score_food * (snake->health > 50) + 50 * score_food * (snake->health <= 50) //30, 50
+		- 0 * score_snake //10
+		+ 0 * score_space // 40
+		+ 0 * (10 - dist) * (snake->health > 50) + 0 * (10 - dist) * (snake->health <= 50); // 50, 30
+
+  std::cout << "RESULT=" << result << '\n';
+  return result;
 }
 
 /* =================================================
@@ -151,14 +156,28 @@ std::pair<int, char> minimax(GameState *state, int snake_index,
                                 char direction, int alpha, int beta,
                                 int depth, int max_depth) {
 	
-//	std::cout << "minimax:" << snake_index << ", alpha=" << alpha << ", beta=" << beta << ", depth=" << depth << ", maxdepth=" << max_depth << '\n'; 
+	std::cout << "minimax:" << snake_index << ", alive:" << state->snakes[snake_index]->alive << ", alpha=" << alpha << ", beta=" << beta << ", depth=" << depth << ", maxdepth=" << max_depth << '\n';
+
+  if (state->survivors < 2) {
+    std::cout << "LAST SURVIVOR\n";
+    int score = state->snakes[0]->alive ? MAX : MIN;
+    return {score, direction};
+  }
 
   if (depth == max_depth)
     return {calculate_score(state, snake_index), direction};
 
   if (snake_index == 0) {
+    // if dead
+    if (!state->snakes[0]->alive) {
+      std::cout << "WE DIE\n";
+      return {MIN, direction};
+      }
+    
 		// combine and copy to local grids
 		GameState::vv orig_grid = state->grid;
+    std::vector<Snake*> orig_snakes = state->snakes;
+    const int orig_snakecount = state->survivors;
 		state->combine_and_copy_grids();
 
     int curmax = MIN;
@@ -182,9 +201,12 @@ std::pair<int, char> minimax(GameState *state, int snake_index,
 				auto [value, new_dir] =
 					minimax(state, new_index, dir, alpha, beta, depth + 1, max_depth);
 
+        std::cout << "US-VALUE=" << value << ", newdir=" << new_dir << '\n';
+
 				if (value > curmax) {
 					curmax = value;
 					curmove = new_dir;
+          std::cout << "US-UPDATE, curmax=" << curmax << ", curmove=" << curmove << '\n';
 				}
 
 				// restore
@@ -196,12 +218,19 @@ std::pair<int, char> minimax(GameState *state, int snake_index,
 		}
 		
 		// restore original grid and all grids
-		state->restore_grids(orig_grid);
+		state->restore_grids(orig_grid, orig_snakecount, orig_snakes);
     return {curmax, curmove};
   }
 
   // TODO: rewrite this, too much duplicate code
   else {
+    // if dead, check the other ones
+    if (!state->snakes[0]->alive) {
+        std::cout << "THEIR DIE\n";
+      int new_index = (snake_index + 1) % (state->snakes.size());
+      return minimax(state, new_index, direction, alpha, beta, depth, max_depth);
+    }
+    
     int curmin = MAX;
     char curmove = direction;
 
@@ -223,9 +252,12 @@ std::pair<int, char> minimax(GameState *state, int snake_index,
 				auto [value, new_dir] =
 					minimax(state, new_index, dir, alpha, beta, depth + 1, max_depth);
 
+        std::cout << "THEIR-VALUE=" << value << ", newdir=" << new_dir << '\n';
+
         if (value < curmin) {
           curmin = value;
           curmove = new_dir;
+          std::cout << "THEIR UPDATE, curmin=" << curmin << ", curmove=" << curmove << '\n';
         }
 
 				// restore

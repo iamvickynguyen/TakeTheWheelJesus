@@ -28,10 +28,10 @@ struct Snake {
   std::deque<Point> body; // head move, tail cuts off
   Point head;
   Point tail;
-  bool is_alive;
+  bool alive;
 
   Snake() {}
-  Snake(const nlohmann::json snake_data) : is_alive(true) {
+  Snake(const nlohmann::json snake_data) : alive(true) {
     id = snake_data["id"];
     health = snake_data["health"];
 
@@ -54,7 +54,8 @@ public:
   std::vector<Point> foods;
   std::vector<Point> hazards;
   std::vector<std::vector<Objects>> grid;
-	vvv grids;	
+	vvv grids;
+  int survivors;
 
   GameState(const nlohmann::json all_data) {
     nlohmann::json board = all_data["board"];
@@ -71,9 +72,9 @@ public:
     size_t max_snakes = board["snakes"].size();
     snakes.reserve(max_snakes);
 
-		// init grids
-		//std::cout << "GRID INIT: " << max_snakes << ", height=" << height << ", width=" << width << '\n';
-		grids.reserve(max_snakes);
+		grids.reserve(max_snakes); // init grids
+
+    survivors = max_snakes;
 
     update(all_data);
   }
@@ -122,9 +123,7 @@ public:
     }
 
 		grids.clear();
-		//std::cout << "GRID UPDATE HERE: \n";
 		for (int i = 0; i < snakes.size(); ++i) {
-			//std::cout << "ASSIGN GRID: " << i << '\n';
 			grids.push_back(grid);
 		}
 
@@ -201,40 +200,32 @@ public:
 	}
 
 	void combine_and_copy_grids() {
-		
 		for (int i = 0; i < height; ++i) {
 			for (int j = 0; j < width; ++j) {
 				bool empty = true;
 				std::vector<int> snake_heads(snakes.size(), 0);
-				
-				//std::cout << "grid size: " << grids.size() << ", i=" << i << ", j=" << j << '\n';
 
 				for (int k = 0; k < snakes.size(); ++k) {
-					//std::cout << "get here....\n";
-					//std::cout << "DEBUG GRID\n";
-
 					empty &= (grids[k][i][j] == EMPTY);
-					
-					//std::cout << "can get here too...\n";
 
 					if (grids[k][i][j] == OTHERHEAD || grids[k][i][j] == MYHEAD) {
 						snake_heads[k] = snakes[k]->body.size();
 					}
 				}
 				
-				if (empty) grid[i][j] = EMPTY;
-				else {
-					//std::cout << "COMBING: ELSE\n";
-
+				if (empty) grid[i][j] = EMPTY; // empty cell
+				else { // cell has some snake head(s)
 					auto max_it = max_element(snake_heads.begin(), snake_heads.end());
-					if (*max_it == 0) grid[i][j] = EMPTY;
-					else {
+					if (*max_it == 0) grid[i][j] = EMPTY; // empty?
+					else { // some will die
 						int p = max_it - snake_heads.begin();
 						for (int k = 0; k < snakes.size(); ++k) {
 							if (k != p && (grids[k][i][j] == MYHEAD || grids[k][i][j] == OTHERHEAD)) {
 								for (auto& point: snakes[k]->body) {
 									grids[k][point.y][point.x] = EMPTY;
 								}
+                snakes[k]->alive = false;
+                --survivors;
 							}
 						}
 
@@ -248,21 +239,20 @@ public:
 			}
 		}
 
-		//std::cout << "END HERE\n";
-
 		// copy
 		for (auto g: grids) {
-			//std::cout << "COPY COMBINING\n";
 			g = grid;
 		}
 	}
 
-	void restore_grids(vv& orig_grid) {
+	void restore_grids(vv& orig_grid, const int snake_count, std::vector<Snake*>& old_snakes) {
 		for (auto& g: grids) {
 			g = orig_grid;
 		}
 
 		grid = orig_grid;
+    survivors = snake_count;
+    snakes = old_snakes;
 	}
 
 };
