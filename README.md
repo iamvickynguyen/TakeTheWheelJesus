@@ -1,9 +1,9 @@
-# Cppssss - UVic BattleSnake 2023
+# TakeTheWheelJesus - UVic BattleSnake 2023
 
 ## Idea:
 
 - Brute force is the best! Check as many possibilities as possible (like a decision tree, deeper is better but need to be fast. The game has a response time limit)
-- Minimax with MaxN ([Minimax in Battlesnake](https://coreyja.com/BattlesnakeMinimax/Minimax%20in%20Battlesnake/))
+- Minimax with alpha-beta pruning ([Minimax in Battlesnake](https://coreyja.com/BattlesnakeMinimax/Minimax%20in%20Battlesnake/))
 - What is the heuristic for a snake?
 - If no better option, chase our tail or chase other snake tail. It's the safest path
 - If health < 50%, then find food. Otherwise, don't consider food. We need fast computation!
