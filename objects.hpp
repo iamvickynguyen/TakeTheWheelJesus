@@ -72,7 +72,7 @@ public:
     snakes.reserve(max_snakes);
 
 		// init grids
-		std::cout << "GRID INIT: " << max_snakes << ", height=" << height << ", width=" << width << '\n';
+		//std::cout << "GRID INIT: " << max_snakes << ", height=" << height << ", width=" << width << '\n';
 		grids.reserve(max_snakes);
 
     update(all_data);
@@ -122,11 +122,12 @@ public:
     }
 
 		grids.clear();
-		std::cout << "GRID UPDATE HERE: \n";
+		//std::cout << "GRID UPDATE HERE: \n";
 		for (int i = 0; i < snakes.size(); ++i) {
-			std::cout << "ASSIGN GRID: " << i << '\n';
+			//std::cout << "ASSIGN GRID: " << i << '\n';
 			grids.push_back(grid);
 		}
+
   }
 
   void reset_grid() {
@@ -163,23 +164,21 @@ public:
 
 		bool tail_move = false;
 
-		vv snake_grid = std::move(grids[snake_index]);
-
 		Point oldtail = snake->body.back();
 		Objects obj = grid[newy][newx];
 
 		snake->body.push_front(snake->head);
 	
-		if (snake_grid[newy][newx] != FOOD) { // update tail
+		if (grids[snake_index][newy][newx] != FOOD) { // update tail
 			snake->body.pop_back();
 			Point newtail = snake->body.back();
-			snake_grid[oldtail.y][oldtail.x] = EMPTY;
-			snake_grid[newtail.y][newtail.x] = is_mysnake ? MYTAIL : OTHERTAIL;
+			grids[snake_index][oldtail.y][oldtail.x] = EMPTY;
+			grids[snake_index][newtail.y][newtail.x] = is_mysnake ? MYTAIL : OTHERTAIL;
 			tail_move = true;
 		} // else FOOD -> do nothing
 
 		// Update head	
-		snake_grid[newy][newx] = is_mysnake ? MYHEAD : OTHERHEAD;
+		grids[snake_index][newy][newx] = is_mysnake ? MYHEAD : OTHERHEAD;
 		
 		return tail_move;
 	}
@@ -202,14 +201,22 @@ public:
 	}
 
 	void combine_and_copy_grids() {
+		
 		for (int i = 0; i < height; ++i) {
 			for (int j = 0; j < width; ++j) {
 				bool empty = true;
 				std::vector<int> snake_heads(snakes.size(), 0);
+				
+				//std::cout << "grid size: " << grids.size() << ", i=" << i << ", j=" << j << '\n';
 
-				for (int k = 0; k < grids.size(); ++k) {
+				for (int k = 0; k < snakes.size(); ++k) {
+					//std::cout << "get here....\n";
+					//std::cout << "DEBUG GRID\n";
+
 					empty &= (grids[k][i][j] == EMPTY);
 					
+					//std::cout << "can get here too...\n";
+
 					if (grids[k][i][j] == OTHERHEAD || grids[k][i][j] == MYHEAD) {
 						snake_heads[k] = snakes[k]->body.size();
 					}
@@ -217,6 +224,8 @@ public:
 				
 				if (empty) grid[i][j] = EMPTY;
 				else {
+					//std::cout << "COMBING: ELSE\n";
+
 					auto max_it = max_element(snake_heads.begin(), snake_heads.end());
 					if (*max_it == 0) grid[i][j] = EMPTY;
 					else {
@@ -239,8 +248,11 @@ public:
 			}
 		}
 
+		//std::cout << "END HERE\n";
+
 		// copy
-		for (auto &g: grids) {
+		for (auto g: grids) {
+			//std::cout << "COPY COMBINING\n";
 			g = grid;
 		}
 	}
@@ -252,6 +264,7 @@ public:
 
 		grid = orig_grid;
 	}
+
 };
 
 #endif // INCLUDE_OBJECTS_HPP

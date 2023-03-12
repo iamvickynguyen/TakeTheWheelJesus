@@ -29,7 +29,7 @@ namespace cppssss {
  * ================================================= */
 
 int length_score(GameState* state) {
-	std::vector<Snake*> snakes = std::move(state->snakes);
+	std::vector<Snake*> snakes = state->snakes;
   const int mysize = snakes[0]->body.size();
   int count = 0;
   for (int i = 1; i < snakes.size(); ++i) {
@@ -56,7 +56,7 @@ int food_score(GameState* state) {
 }
 
 int snake_score(GameState* state) {
-	std::vector<std::vector<Objects>> grid = std::move(state->grid);
+	std::vector<std::vector<Objects>> grid = state->grid;
 	int survivors = 0;
 	for (int i = 0; i < grid.size(); ++i) {
 		for (int j = 0; j < grid[0].size(); ++j) {
@@ -68,7 +68,7 @@ int snake_score(GameState* state) {
 
 int space_score(GameState* state) {
 	int count = 0;
-	std::vector<std::vector<Objects>> grid = std::move(state->grid);
+	std::vector<std::vector<Objects>> grid = state->grid;
 	Snake* mysnake = state->snakes[0];
 	const int myhead_y = mysnake->head.y;
 	const int myhead_x = mysnake->head.x;
@@ -100,8 +100,6 @@ int dist_to_tail_score(GameState* state) {
 	
 
 int calculate_score(GameState* state, const int snake_index) {
-	std::cout << "CALCULATE SCORE\n";
-
   Snake *snake = state->snakes[snake_index];
 
 	// if it's our turn
@@ -121,10 +119,16 @@ int calculate_score(GameState* state, const int snake_index) {
 	}
 
 	int score_length = length_score(state);
+	
 	int score_food = food_score(state);
+	
 	int score_snake = snake_score(state);
+	
 	int score_space = space_score(state);
+	
 	int dist = dist_to_tail_score(state);
+
+	
 
 	return 20 * score_length
 		+ 30 * score_food * (snake->health > 50) + 50 * score_food * (snake->health <= 50)
@@ -145,7 +149,8 @@ int calculate_score(GameState* state, const int snake_index) {
 std::pair<int, char> minimax(GameState *state, int snake_index,
                                 char direction, int alpha, int beta,
                                 int depth, int max_depth) {
-	std::cout << "SNAKE_INDEX=" << snake_index << ", DIR=" << direction << ", alpha=" << alpha << ", beta=" << beta << ", depth=" << depth << ", max_depth=" << max_depth << '\n';
+	
+
 
   if (depth == max_depth)
     return {calculate_score(state, snake_index), direction};
@@ -233,7 +238,7 @@ std::pair<int, char> minimax(GameState *state, int snake_index,
     return {curmin, curmove};
   }
 
-	std::cout << "SOMEHOW WE HIT THIS\n";
+	
   return {MIN, 'u'}; // dummy
 }
 
@@ -251,13 +256,10 @@ std::string move(GameState *state) {
   std::tuple<int, int, char> moves[4] = {
       {-1, 0, 'd'}, {1, 0, 'u'}, {0, -1, 'l'}, {0, 1, 'r'}};
   for (auto &[y_offset, x_offset, dir] : moves) {
-		std::cout << "LOOP: " << y_offset << ", " << x_offset << ", dir=" << dir << '\n';
+		
 
     int y = snake->head.y + y_offset;
     int x = snake->head.x + x_offset;
-
-		std::cout << "y=" << y << ", x=" << x << ", height=" << state->height << ", width=" << state->width << ", inbound="
-			<< (state->in_bound(y, x)) << ", is_safe=" << (state->is_safe(y, x)) << '\n';
 
 		if (state->in_bound(y, x) && state->is_safe(y, x)) {
 				// store current state
@@ -279,9 +281,7 @@ std::string move(GameState *state) {
 				alpha = std::max(alpha, curmax);
     		if (beta <= alpha) break;		
   	}
-	}
-
-	std::cout << "MOVE " << curmove << '\n';
+	}	
   
 	if (curmove == 'u')
     return "up";
