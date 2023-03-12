@@ -46,11 +46,15 @@ struct Snake {
 
 class GameState {
 public:
+	using vv = std::vector<std::vector<Objects>>;
+	using vvv = std::vector<vv>;
+	
   int height, width;
   std::vector<Snake *> snakes; // 0 index is my snake
   std::vector<Point> foods;
   std::vector<Point> hazards;
   std::vector<std::vector<Objects>> grid;
+	vvv grids;	
 
   GameState(const nlohmann::json all_data) {
     nlohmann::json board = all_data["board"];
@@ -61,11 +65,15 @@ public:
     grid.assign(height, std::vector<Objects>(width, EMPTY));
 
     // Allocate max possible to avoid allocation
-    foods.resize(height * width);
-    hazards.resize(height * width);
+    foods.reserve(height * width);
+    hazards.reserve(height * width);
 
     size_t max_snakes = board["snakes"].size();
-    snakes.resize(max_snakes);
+    snakes.reserve(max_snakes);
+
+		// init grids
+		std::cout << "GRID INIT: " << max_snakes << ", height=" << height << ", width=" << width << '\n';
+		grids.reserve(max_snakes);
 
     update(all_data);
   }
@@ -112,6 +120,13 @@ public:
       hazards.push_back(Point(point["x"], point["y"], 0));
       grid[point["y"]][point["x"]] = HAZARD; // upate grid
     }
+
+		grids.clear();
+		std::cout << "GRID UPDATE HERE: \n";
+		for (int i = 0; i < snakes.size(); ++i) {
+			std::cout << "ASSIGN GRID: " << i << '\n';
+			grids.push_back(grid);
+		}
   }
 
   void reset_grid() {
@@ -140,42 +155,102 @@ public:
 	// Update new position of the snake, also update the grid
 	// If the snake eats food then, tail stays
 	// also health = 100
-	std::pair<Point, Objects> snake_move(Snake* snake, const int newy, const int newx, const int mysnake) {
+	// return if tail position change
+	bool snake_move(const int snake_index, const int newy, const int newx, const int is_mysnake) {
+		Snake* snake = snakes[snake_index];
 		snake->head.y = newy;
 		snake->head.x = newx;
+
+		bool tail_move = false;
+
+		vv snake_grid = std::move(grids[snake_index]);
 
 		Point oldtail = snake->body.back();
 		Objects obj = grid[newy][newx];
 
 		snake->body.push_front(snake->head);
 	
-		if (grid[newy][newx] != FOOD) { // update tail
+		if (snake_grid[newy][newx] != FOOD) { // update tail
 			snake->body.pop_back();
 			Point newtail = snake->body.back();
-			grid[oldtail.y][oldtail.x] = EMPTY;
-			grid[newtail.y][newtail.x] = mysnake ? MYTAIL : OTHERTAIL;
+			snake_grid[oldtail.y][oldtail.x] = EMPTY;
+			snake_grid[newtail.y][newtail.x] = is_mysnake ? MYTAIL : OTHERTAIL;
+			tail_move = true;
 		} // else FOOD -> do nothing
 
 		// Update head	
-		if (grid[newy][newx] == EMPTY) {
-			grid[newy][newx] = mysnake ? MYHEAD : OTHERHEAD;
-		}
-
-		// Suppose it's my turn, if the grid[newy][newx] == OTHERTAIL
-		// What to update when the other snake hasn't moved yet? Also vice versa?
-		else {
-			grid[newy][newx] = mysnake ? MYHEAD : OTHERHEAD;
-		}
-
-		return {oldtail, obj};
+		snake_grid[newy][newx] = is_mysnake ? MYHEAD : OTHERHEAD;
+		
+		return tail_move;
 	}
 
 	// snake moves backwards
-	void restore_snake_move(Snake* snake, const int y_offset, const int x_offset, Point& oldtail, Objects obj) {
+	void restore_snake_move(const int snake_index, Point& oldtail, vv& oldgrid, bool did_tail_move) {
+		Snake* snake = snakes[snake_index];
+		
+		// restore tail
+		if (did_tail_move) {
+			Point curtail = snake->body.back();
+			snake->body.push_back(oldtail);
+		}
+		
+		// restore head
 		snake->body.pop_front();
-		snake->body.push_back(oldtail);
-		snake->head.y -= y_offset;
-		snake->head.x -= x_offset;
+		snake->head = snake->body.front();
+		
+		grids[snake_index] = oldgrid;
+	}
+
+	void combine_and_copy_grids() {
+		for (int i = 0; i < height; ++i) {
+			for (int j = 0; j < width; ++j) {
+				bool empty = true;
+				std::vector<int> snake_heads(snakes.size(), 0);
+
+				for (int k = 0; k < grids.size(); ++k) {
+					empty &= (grids[k][i][j] == EMPTY);
+					
+					if (grids[k][i][j] == OTHERHEAD || grids[k][i][j] == MYHEAD) {
+						snake_heads[k] = snakes[k]->body.size();
+					}
+				}
+				
+				if (empty) grid[i][j] = EMPTY;
+				else {
+					auto max_it = max_element(snake_heads.begin(), snake_heads.end());
+					if (*max_it == 0) grid[i][j] = EMPTY;
+					else {
+						int p = max_it - snake_heads.begin();
+						for (int k = 0; k < snakes.size(); ++k) {
+							if (k != p && (grids[k][i][j] == MYHEAD || grids[k][i][j] == OTHERHEAD)) {
+								for (auto& point: snakes[k]->body) {
+									grids[k][point.y][point.x] = EMPTY;
+								}
+							}
+						}
+
+						Objects val = (p == 0) ? MYBODY : OTHERBODY;
+						for (auto& point: snakes[p]->body) {
+							grid[point.y][point.x] = val;
+						}
+						grid[i][j] = grids[p][i][j];
+					}
+				}
+			}
+		}
+
+		// copy
+		for (auto &g: grids) {
+			g = grid;
+		}
+	}
+
+	void restore_grids(vv& orig_grid) {
+		for (auto& g: grids) {
+			g = orig_grid;
+		}
+
+		grid = orig_grid;
 	}
 };
 
